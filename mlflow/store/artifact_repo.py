@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABCMeta
 
 from mlflow.exceptions import MlflowException
-from mlflow.store.rest_store import DatabricksStore
+from mlflow.store.databricks_store import DatabricksStore
 
 
 class ArtifactRepository:

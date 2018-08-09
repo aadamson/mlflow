@@ -14,7 +14,7 @@ from mlflow.entities.source_type import SourceType
 
 from mlflow.projects import _fetch_project, _expand_uri, _project_spec
 from mlflow.projects.submitted_run import SubmittedRun
-from mlflow.utils import rest_utils, file_utils, process
+from mlflow.utils import databricks_utils, file_utils, process
 from mlflow.utils.exception import ExecutionException
 from mlflow.utils.logging_utils import eprint
 from mlflow import tracking
@@ -34,17 +34,17 @@ DBFS_EXPERIMENT_DIR_BASE = "mlflow-experiments"
 
 
 def _jobs_runs_get(databricks_run_id):
-    return rest_utils.databricks_api_request(
+    return databricks_utils.databricks_api_request(
         endpoint="jobs/runs/get", method="GET", json={"run_id": databricks_run_id})
 
 
 def _jobs_runs_cancel(databricks_run_id):
-    return rest_utils.databricks_api_request(
+    return databricks_utils.databricks_api_request(
         endpoint="jobs/runs/cancel", method="POST", json={"run_id": databricks_run_id})
 
 
 def _jobs_runs_submit(req_body_json):
-    return rest_utils.databricks_api_request(
+    return databricks_utils.databricks_api_request(
         endpoint="jobs/runs/submit", method="POST", json=req_body_json)
 
 
@@ -94,7 +94,7 @@ def _check_databricks_auth_available():
             "Could not find Databricks CLI on PATH. Please install and configure the Databricks "
             "CLI as described in https://github.com/databricks/databricks-cli")
     # Verify that we can get Databricks auth
-    rest_utils.get_databricks_http_request_kwargs_or_fail()
+    databricks_utils.get_databricks_http_request_kwargs_or_fail()
 
 
 def _upload_to_dbfs(src_path, dbfs_uri):
@@ -112,7 +112,7 @@ def _dbfs_path_exists(dbfs_uri):
     default Databricks CLI profile.
     """
     dbfs_path = _parse_dbfs_uri_path(dbfs_uri)
-    json_response_obj = rest_utils.databricks_api_request(
+    json_response_obj = databricks_utils.databricks_api_request(
         endpoint="dbfs/get-status", method="GET", json={"path": dbfs_path})
     # If request fails with a RESOURCE_DOES_NOT_EXIST error, the file does not exist on DBFS
     error_code_field = "error_code"

@@ -14,7 +14,7 @@ from mlflow.entities.metric import Metric
 from mlflow.entities.run_status import RunStatus
 from mlflow.entities.source_type import SourceType
 from mlflow.store.file_store import FileStore
-from mlflow.store.rest_store import RestStore, DatabricksStore
+from mlflow.store.rest_store import RestStore
 from mlflow.store.artifact_repo import ArtifactRepository
 from mlflow.utils import env, rest_utils
 from mlflow.utils.validation import _validate_metric_name, _validate_param_name, _validate_run_id

@@ -133,7 +133,7 @@ def test_run_databricks_validations(
     """
     Tests that running on Databricks fails before making any API requests if validations fail.
     """
-    with mock.patch("mlflow.utils.rest_utils.databricks_api_request") as db_api_req_mock,\
+    with mock.patch("mlflow.utils.databricks_utils.databricks_api_request") as db_api_req_mock,\
             mock.patch("mlflow.projects.databricks._check_databricks_auth_available"):
         # Test bad tracking URI
         tracking_uri_mock.return_value = tmpdir.strpath
