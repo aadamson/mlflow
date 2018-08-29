@@ -1,0 +1,19 @@
+.note-view-outer-container {
+  width: 100%;
+  height: 90%;
+}
+
+.note-view-outer-container div.submit-button {
+  width: 100%;
+  height: 10%;
+}
+
+.note-view-outer-container .text-area-border-box {
+  width: 100%;
+  height: 90%;
+}
+
+.note-view-outer-container .react-mde {
+  width: 100%;
+  height: 100%;
+}

@@ -9,8 +9,12 @@ import ArtifactPage from './ArtifactPage';
 import { getLatestMetrics } from '../reducers/MetricReducer';
 import { Experiment } from '../sdk/MlflowMessages';
 import Utils from '../utils/Utils';
+import { MLFLOW_INTERNAL_PREFIX } from "../utils/TagUtils";
+import { NoteInfo } from "../utils/NoteUtils";
 import BreadcrumbTitle from "./BreadcrumbTitle";
+import ShowNoteView from "./NoteView";
 
+const NOTES_KEY = 'notes';
 const PARAMATERS_KEY = 'parameters';
 const METRICS_KEY = 'metrics';
 const ARTIFACTS_KEY = 'artifacts';
@@ -21,7 +25,8 @@ class RunView extends Component {
     super(props);
     this.onClickExpander = this.onClickExpander.bind(this);
     this.getExpanderClassName = this.getExpanderClassName.bind(this);
-    this.state.showTags = getTagValues(props.tags).length > 0;
+    this.handleSubmittedNote = this.handleSubmittedNote.bind(this);
+    this.state.showTags = getVisibleTagValues(props.tags).length > 0;
   }
 
   static propTypes = {
@@ -35,6 +40,7 @@ class RunView extends Component {
   };
 
   state = {
+    showNotes: true,
     showParameters: true,
     showMetrics: true,
     showArtifacts: true,
@@ -43,6 +49,10 @@ class RunView extends Component {
 
   onClickExpander(key) {
     switch (key) {
+      case NOTES_KEY: {
+        this.setState({ showNotes: !this.state.showNotes });
+        return;
+      }
       case PARAMATERS_KEY: {
         this.setState({ showParameters: !this.state.showParameters });
         return;
@@ -65,6 +75,9 @@ class RunView extends Component {
 
   getExpanderClassName(key) {
     switch (key) {
+      case NOTES_KEY: {
+        return this.state.showNotes ? 'fa-caret-down' : 'fa-caret-right';
+      }
       case PARAMATERS_KEY: {
         return this.state.showParameters ? 'fa-caret-down' : 'fa-caret-right';
       }
@@ -85,6 +98,7 @@ class RunView extends Component {
 
   render() {
     const { run, experiment, params, tags, latestMetrics, getMetricPagePath } = this.props;
+    const noteInfo = getNoteInfo(tags);
     const startTime = run.getStartTime() ? Utils.formatTimestamp(run.getStartTime()) : '(unknown)';
     const duration =
       run.getStartTime() && run.getEndTime() ? run.getEndTime() - run.getStartTime() : null;
@@ -174,6 +188,18 @@ class RunView extends Component {
           : null
         }
         <div className="RunView-info">
+          <h2 onClick={() => this.onClickExpander(NOTES_KEY)} className="table-name">
+            <span ><i className={`fa ${this.getExpanderClassName(NOTES_KEY)}`}/></span>
+            {' '}Notes
+          </h2>
+          {this.state.showNotes ?
+            <ShowNoteView
+              runUuid={this.props.runUuid}
+              noteInfo={noteInfo}
+              submitCallback={this.handleSubmittedNote}
+            /> :
+            null
+          }
           <h2 onClick={() => this.onClickExpander(PARAMATERS_KEY)} className="table-name">
             <span ><i className={`fa ${this.getExpanderClassName(PARAMATERS_KEY)}`}/></span>
             {' '}Parameters
@@ -205,7 +231,7 @@ class RunView extends Component {
           {this.state.showTags ?
             <HtmlTableView
               columns={["Name", "Value"]}
-              values={getTagValues(tags)}
+              values={getVisibleTagValues(tags)}
               styles={tableStyles}
             /> :
             null
@@ -223,6 +249,14 @@ class RunView extends Component {
           </div>
       </div>
     );
+  }
+
+  handleSubmittedNote(content, err) {
+    if (err) {
+      // TODO
+    } else {
+      window.location.reload();
+    }
   }
 }
 
@@ -246,10 +280,21 @@ const getParamValues = (params) => {
   );
 };
 
-const getTagValues = (tags) => {
+const getVisibleTagValues = (tags) => {
+  // Collate tag objects into list of [key, value] lists and filter MLflow-internal tags
   return Object.values(tags).map((t) =>
     [t.getKey(), t.getValue()]
+  ).filter(t =>
+    !t[0].startsWith(MLFLOW_INTERNAL_PREFIX)
   );
+};
+
+const getNoteInfo = (tags) => {
+  try {
+    return NoteInfo.fromRunTags(tags);
+  } catch(err) {
+    return undefined;
+  }
 };
 
 const getMetricValues = (latestMetrics, getMetricPagePath) => {
