@@ -290,11 +290,7 @@ const getVisibleTagValues = (tags) => {
 };
 
 const getNoteInfo = (tags) => {
-  try {
-    return NoteInfo.fromRunTags(tags);
-  } catch(err) {
-    return undefined;
-  }
+  return NoteInfo.fromRunTags(tags);
 };
 
 const getMetricValues = (latestMetrics, getMetricPagePath) => {

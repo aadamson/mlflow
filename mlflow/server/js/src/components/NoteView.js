@@ -1,20 +1,19 @@
 import React, { Component } from 'react';
 import Button from 'react-bootstrap/lib/Button';
-import ReactMde  from 'react-mde';
-import * as Showdown from "showdown";
+import ReactMde from 'react-mde';
+import { Converter } from "showdown";
 import PropTypes from 'prop-types';
-import { setTagApi } from '../Actions'
+import { setTagApi } from '../Actions';
 import { NoteInfo, NOTE_TAG_PREFIX } from "../utils/NoteUtils";
 import 'react-mde/lib/styles/css/react-mde-all.css';
 import './NoteView.css';
 
 class ShowNoteView extends Component {
-
   constructor(props) {
     super(props);
     this.renderNote = this.renderNote.bind(this);
     this.handleSubmitClick = this.handleSubmitClick.bind(this);
-    this.converter = new Showdown.Converter({tables: true, simplifiedAutoLink: true});
+    this.converter = new Converter({tables: true, simplifiedAutoLink: true});
     this.uneditedContent = this.getUneditedContent();
     this.state = {
       mdeState: undefined,
@@ -51,7 +50,7 @@ class ShowNoteView extends Component {
 
     const action = setTagApi(this.props.runUuid, NOTE_TAG_PREFIX + 'content', submittedContent);
     action.payload.then(
-      (payload) => {
+      () => {
         self.setState({
           noteInfo: new NoteInfo(submittedContent),
         });
@@ -82,7 +81,7 @@ class ShowNoteView extends Component {
         <div className="submit-button">
           <Button bsStyle="primary"
                   onClick={this.handleSubmitClick}
-                  { ...( canSubmit ? { active: true } : { disabled: true } ) }>
+                  {...(canSubmit ? { active: true } : { disabled: true })}>
             Submit
           </Button>
         </div>

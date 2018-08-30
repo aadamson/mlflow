@@ -13,11 +13,11 @@ export class NoteInfo {
     ).filter((item) =>
       item[0].startsWith(NOTE_TAG_PREFIX)
     ).reduce((accumulated, item) => {
-        let key = item[0].slice(NOTE_TAG_PREFIX.length);
-        accumulated[key] = item[1];
-        return accumulated;
-      }, { }
-    );
+      const key = item[0].slice(NOTE_TAG_PREFIX.length);
+      const newAccumulated = Object.assign({key: item[1]}, accumulated);
+      newAccumulated[key] = item[1];
+      return newAccumulated;
+    }, { });
     return new NoteInfo(obj.content);
   };
 }
