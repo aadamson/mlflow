@@ -6,6 +6,8 @@ import com.google.protobuf.util.JsonFormat;
 
 import org.mlflow.api.proto.Service.*;
 
+import java.util.List;
+
 class MlflowProtobufMapper {
 
   String makeCreateExperimentRequest(String expName) {
@@ -38,6 +40,16 @@ class MlflowProtobufMapper {
     builder.setRunUuid(runUuid);
     builder.setKey(key);
     builder.setValue(value);
+    return print(builder);
+  }
+
+  String makeLogMetricGroup(String runUuid, String key, List<MetricGroupParam> params, double value, long timestamp) {
+    LogMetricGroup.Builder builder = LogMetricGroup.newBuilder();
+    builder.setRunUuid(runUuid);
+    builder.setKey(key);
+    builder.addAllParams(params);
+    builder.setValue(value);
+    builder.setTimestamp(timestamp);
     return print(builder);
   }
 

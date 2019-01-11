@@ -132,6 +132,17 @@ class AbstractStore:
         """
         pass
 
+    def log_metric_group(self, run_uuid, key, entry):
+        """
+        Logs an entry in a metric group for the specified run. If a metric group with the specified
+        key exists for the specified run, and a new entry. Otherwise, create a new metric group and
+        add the entry.
+        :param run_uuid: String id for the run
+        :param key: String id for the metric group
+        :param entry: MetricGroupEntry instance to log
+        """
+        pass
+
     def log_param(self, run_uuid, param):
         """
         Logs a param for the specified run

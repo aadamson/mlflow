@@ -6,6 +6,10 @@ The ``mlflow.entities`` module defines entities returned by the MLflow
 from mlflow.entities.experiment import Experiment
 from mlflow.entities.file_info import FileInfo
 from mlflow.entities.metric import Metric
+from mlflow.entities.metric_group import MetricGroup
+from mlflow.entities.metric_group_entry import MetricGroupEntry
+from mlflow.entities.metric_group_param import MetricGroupParam
+
 from mlflow.entities.param import Param
 from mlflow.entities.run import Run
 from mlflow.entities.run_data import RunData
@@ -19,6 +23,9 @@ __all__ = [
     "Experiment",
     "FileInfo",
     "Metric",
+    "MetricGroup",
+    "MetricGroupEntry",
+    "MetricGroupParam",
     "Param",
     "Run",
     "RunData",

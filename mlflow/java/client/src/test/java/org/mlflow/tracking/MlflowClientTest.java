@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -131,6 +132,13 @@ public class MlflowClientTest {
     client.logMetric(runId, "accuracy_score", ACCURACY_SCORE);
     client.logMetric(runId, "zero_one_loss", ZERO_ONE_LOSS);
 
+    // Log metric groups
+    MetricGroupParam.Builder paramBuilder = MetricGroupParam.newBuilder();
+    paramBuilder.setKey("foo");
+    paramBuilder.setValue("bar");
+    List<MetricGroupParam> metricGroupParams = Arrays.asList(paramBuilder.build());
+    client.logMetricGroup(runId, "accuracy_score", metricGroupParams, ACCURACY_SCORE);
+
     // Log tag
     client.setTag(runId, "user_email", USER_EMAIL);
 
@@ -150,6 +158,8 @@ public class MlflowClientTest {
     Run run = client.getRun(runId);
     RunInfo runInfo = run.getInfo();
     assertRunInfo(runInfo, expId, sourceFile);
+    assertMetricGroup(run.getData().getMetricGroupsList(),
+            "accuracy_score", metricGroupParams, ACCURACY_SCORE);
 
     // Assert parent run ID is not set.
     Assert.assertTrue(run.getData().getTagsList().stream().noneMatch(

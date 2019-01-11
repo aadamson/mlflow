@@ -217,6 +217,32 @@ mlflow_client_log_metric <- function(client, run_id, key, value, timestamp = NUL
   ))
 }
 
+#' Log Metric
+#'
+#' Logs a metric for a run. Metrics key-value pair that records a single float measure.
+#'   During a single execution of a run, a particular metric can be logged several times.
+#'   Backend will keep track of historical values along with timestamps.
+#'
+#' @param key Name of the metric.
+#' @param value Float value for the metric being logged.
+#' @param timestamp Unix timestamp in milliseconds at the time metric was logged.
+#' @template roxlate-run-id
+#' @template roxlate-client
+mlflow_client_log_metric_group <- function(client, run_id, key, params, value, timestamp = NULL) {
+  if (!is.numeric(value)) stop(
+    "Metric group `", key, "`` must be numeric but ", class(value)[[1]], " found.",
+    call. = FALSE
+  )
+  timestamp <- timestamp %||% current_time()
+  mlflow_rest("runs", "log-metric-group", client = client, verb = "POST", data = list(
+    run_uuid = run_id,
+    key = key,
+    params = params,
+    value = value,
+    timestamp = timestamp
+  ))
+}
+
 #' Log Parameter
 #'
 #' Logs a parameter for a run. Examples are params and hyperparams

@@ -9,7 +9,8 @@ import uuid
 import mock
 import pytest
 
-from mlflow.entities import Experiment, Metric, Param, RunTag, ViewType, RunInfo
+from mlflow.entities import Experiment, Metric, MetricGroup, MetricGroupEntry, MetricGroupParam, \
+                            Param, RunTag, ViewType, RunInfo
 from mlflow.exceptions import MlflowException, MissingConfigException
 from mlflow.store.file_store import FileStore
 from mlflow.utils.file_utils import write_yaml, read_yaml
@@ -91,6 +92,31 @@ class TestFileStore(unittest.TestCase):
                             f.write("%d %d\n" % (timestamp, metric_value))
                     metrics[metric_name] = values
                 self.run_data[run_uuid]["metrics"] = metrics
+                # metric groups
+                metrics_groups_folder = os.path.join(run_folder, FileStore.METRIC_GROUPS_FOLDER_NAME)
+                os.makedirs(metrics_groups_folder)
+                metric_groups = {}
+                for _ in range(3):
+                    schema_size = random_int(1, 4)
+                    metric_group_name = random_str(random_int(6, 10))
+                    schema = [random_str(random_int(3, 5)) for _ in range(schema_size)]
+                    timestamp = int(time.time())
+                    metric_group_dir = os.path.join(metrics_groups_folder, metric_group_name)
+                    os.makedirs(metric_group_dir)
+                    write_yaml(metric_group_dir, FileStore.META_DATA_FILE_NAME, {"fields": schema})
+
+                    metric_group_values_file = os.path.join(metric_group_dir, 'values')
+                    values = []
+                    for _ in range(10):
+                        metric_value = random_int(100, 2000)
+                        timestamp += random_int(10000, 2000000)
+                        param_values = [random_str(random_int(10, 20)) for _ in range(schema_size)]
+                        values.append((list(zip(schema, param_values)), timestamp, metric_value))
+                        with open(metric_group_values_file, 'a') as f:
+                            value_string = "\t".join([str(p) for p in param_values + [timestamp, metric_value]])
+                            f.write("%s\n" % value_string)
+                    metric_groups[metric_group_name] = (schema, values)
+                self.run_data[run_uuid]["metric_groups"] = metric_groups
                 # artifacts
                 os.makedirs(os.path.join(run_folder, FileStore.ARTIFACTS_FOLDER_NAME))
 
@@ -270,6 +296,7 @@ class TestFileStore(unittest.TestCase):
                 run_info.pop("metrics")
                 run_info.pop("params")
                 run_info.pop("tags")
+                run_info.pop("metric_groups")
                 run_info['lifecycle_stage'] = RunInfo.ACTIVE_LIFECYCLE
                 self.assertEqual(run_info, dict(run.info))
 
@@ -283,6 +310,7 @@ class TestFileStore(unittest.TestCase):
                 dict_run_info.pop("metrics")
                 dict_run_info.pop("params")
                 dict_run_info.pop("tags")
+                dict_run_info.pop("metric_groups")
                 dict_run_info['lifecycle_stage'] = RunInfo.ACTIVE_LIFECYCLE
                 self.assertEqual(dict_run_info, dict(run_info))
 
@@ -331,6 +359,27 @@ class TestFileStore(unittest.TestCase):
                         self.assertEqual(metric.key, metric_name)
                         self.assertEqual(metric.value, metric_value)
 
+    def test_get_all_metric_groups(self):
+        fs = FileStore(self.test_root)
+        for exp_id in self.experiments:
+            runs = self.exp_data[exp_id]["runs"]
+            for run_uuid in runs:
+                run_info = self.run_data[run_uuid]
+                metric_groups = fs.get_all_metric_groups(run_uuid)
+                metric_groups_dict = run_info.pop("metric_groups")
+                self.assertEqual(len(metric_groups), len(metric_groups_dict))
+                for metric_group in metric_groups:
+                    _, metric_group_entry_dicts = metric_groups_dict[metric_group.key]
+                    self.assertEqual(len(metric_group.entries), len(metric_group_entry_dicts))
+                    for i, entry in enumerate(metric_group.entries):
+                        entry_dict = metric_group_entry_dicts[i]
+                        self.assertEqual(entry.timestamp, entry_dict[1])
+                        self.assertEqual(entry.value, entry_dict[2])
+                        for i, param in enumerate(entry.params):
+                            param_dict = entry_dict[0][i]
+                            self.assertEqual(param.key, param_dict[0])
+                            self.assertEqual(param.value, param_dict[1])
+
     def test_get_param(self):
         fs = FileStore(self.test_root)
         for exp_id in self.experiments:
@@ -372,6 +421,21 @@ class TestFileStore(unittest.TestCase):
         assert metric.key == WEIRD_METRIC_NAME
         assert metric.value == 10
         assert metric.timestamp == 1234
+
+    def test_weird_metric_group_names(self):
+        WEIRD_METRIC_GROUP_NAME = "this is/a weird/but valid metric"
+        fs = FileStore(self.test_root)
+        run_uuid = self.exp_data[0]["runs"][0]
+        fs.log_metric_group(run_uuid, WEIRD_METRIC_GROUP_NAME,
+                            MetricGroupEntry([MetricGroupParam(WEIRD_METRIC_GROUP_NAME, "foo")], 10, 1234))
+        metric_group = fs.get_run(run_uuid).data.metric_groups[0]
+        assert metric_group.key == WEIRD_METRIC_GROUP_NAME
+        assert metric_group.entries[0].value == 10
+        assert metric_group.entries[0].timestamp == 1234
+
+        assert metric_group.key == WEIRD_METRIC_GROUP_NAME
+        assert metric_group.entries[0].params[0].key == WEIRD_METRIC_GROUP_NAME
+        assert metric_group.entries[0].params[0].value == "foo"
 
     def test_weird_tag_names(self):
         WEIRD_TAG_NAME = "this is/a weird/but valid tag"
